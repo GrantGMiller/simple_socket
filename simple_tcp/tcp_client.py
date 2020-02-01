@@ -4,7 +4,7 @@ from threading import Timer
 
 
 class SimpleTCPClient:
-    def __init__(self, hostname, ipport, autoConnect=True):
+    def __init__(self, hostname, ipport, autoConnect=True, trace=False):
         self._hostname = hostname
         self._ipport = ipport
         self._autoConnect = autoConnect
@@ -13,7 +13,7 @@ class SimpleTCPClient:
 
         self._onConnectedCallback = None
         self._onDisconnectedCallback = None
-        self._connectionStatus = None
+        self._connectionStatus = ''
 
         self._onReceiveCallback = None
         self._timerParseReceive = None
@@ -23,18 +23,35 @@ class SimpleTCPClient:
         if self._autoConnect:
             self.Connect(1)
 
+    @property
+    def onConnected(self):
+        return self._onConnectedCallback
+
+    @onConnected.setter
     def onConnected(self, callback):
         self._onConnectedCallback = callback
         if 'Connected' in self._connectionStatus:
-            self._onConnectedCallback(self, self._connectionStatus)
+            if self._onConnectedCallback:
+                self._onConnectedCallback(self, self._connectionStatus)
         return callback
 
+    @property
+    def onDisconnected(self):
+        return self._onDisconnectedCallback
+
+    @onDisconnected.setter
     def onDisconnected(self, callback):
         self._onDisconnectedCallback = callback
         if 'Disconnected' in self._connectionStatus:
-            self._onDisconnectedCallback(self, self._connectionStatus)
+            if self._onDisconnectedCallback:
+                self._onDisconnectedCallback(self, self._connectionStatus)
         return callback
 
+    @property
+    def onReceive(self):
+        return self._onReceiveCallback
+
+    @onReceive.setter
     def onReceive(self, callback):
         self._onReceiveCallback = callback
         return callback
@@ -148,28 +165,14 @@ if __name__ == '__main__':
 
     client = SimpleTCPClient('10.8.27.171', 23)
 
-
     # by default, the client will connect and attempt to maintain its connection.
     # if you want to manually control the connection, pass autoConnect=False
     # then use the .Connect() and .Disconnect() methods to manage your connection manually
 
-    # you can stack decorators for events
-    @client.onConnected
-    @client.onDisconnected
-    def HandleConnectionChange(_, state):
-        print('The client is', state)
+    client.onConnected = lambda _, state: print('The client is', state)
+    client.onDisconnected = lambda _, state: print('The client is', state)
 
-
-    # or you can single-stack decorators
-    @client.onReceive
-    def HandleReceive(_, data):
-        print('The client received this data:', data)
-
-
-    # you could replace the above with
-    # def HandleReceive(_, data):
-    #   print('Rx:', data)
-    # client.onReceive = HandleReceive
+    client.onReceive = lambda _, data: print('Rx:', data)
 
     while True:
         cmd = random.choice(['q', 'n', 'i'])
