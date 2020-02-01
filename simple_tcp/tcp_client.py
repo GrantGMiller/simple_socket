@@ -164,6 +164,7 @@ if __name__ == '__main__':
     import random
 
     client = SimpleTCPClient('10.8.27.171', 23)
+    print('client.Hostname=', client.Hostname)
 
     # by default, the client will connect and attempt to maintain its connection.
     # if you want to manually control the connection, pass autoConnect=False
