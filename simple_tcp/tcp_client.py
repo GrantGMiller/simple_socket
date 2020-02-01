@@ -102,7 +102,8 @@ class SimpleTCPClient:
             if rxData == b'':
                 self.Disconnect()
             if self._onReceiveCallback:
-                self._onReceiveCallback(self, rxData)
+                # do callback in its own thread to prevent blocking
+                Timer(0, self._onReceiveCallback, args=(self, rxData)).start()
         except Exception as e:
             if 'timed out' in str(e):
                 pass
