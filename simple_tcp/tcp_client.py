@@ -169,7 +169,7 @@ class SimpleTCPClient:
 
 if __name__ == '__main__':
     import random
-
+    # from simple_tcp.tcp_client import SimpleTCPClient
     client = SimpleTCPClient('10.8.27.171', 23)
     print('client.Hostname=', client.Hostname)
 
