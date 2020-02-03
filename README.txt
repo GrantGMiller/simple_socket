@@ -1,31 +1,18 @@
 # simple_tcp
 
 import random
-
+# from simple_tcp.tcp_client import SimpleTCPClient
 client = SimpleTCPClient('10.8.27.171', 23)
-
+print('client.Hostname=', client.Hostname)
 
 # by default, the client will connect and attempt to maintain its connection.
 # if you want to manually control the connection, pass autoConnect=False
 # then use the .Connect() and .Disconnect() methods to manage your connection manually
 
-# you can stack decorators for events
-@client.onConnected
-@client.onDisconnected
-def HandleConnectionChange(_, state):
-    print('The client is', state)
+client.onConnected = lambda _, state: print('The client is', state)
+client.onDisconnected = lambda _, state: print('The client is', state)
 
-
-# or you can single-stack decorators
-@client.onReceive
-def HandleReceive(_, data):
-    print('The client received this data:', data)
-
-
-# you could replace the above with
-# def HandleReceive(_, data):
-#   print('Rx:', data)
-# client.onReceive = HandleReceive
+client.onReceive = lambda _, data: print('Rx:', data)
 
 while True:
     cmd = random.choice(['q', 'n', 'i'])
