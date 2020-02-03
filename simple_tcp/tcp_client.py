@@ -23,6 +23,12 @@ class SimpleTCPClient:
         if self._autoConnect:
             self.Connect(1)
 
+    def StartLogging(self):
+        pass
+
+    def StopLogging(self):
+        pass
+
     @property
     def onConnected(self):
         return self._onConnectedCallback
