@@ -1,0 +1,2 @@
+# install with
+# pip3 install git+https://github.com/GrantGMiller/simple_tcp.git@master#egg=simple_tcp
