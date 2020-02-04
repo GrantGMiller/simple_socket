@@ -39,7 +39,6 @@ class SimpleTCPClient:
         if 'Connected' in self._connectionStatus:
             if self._onConnectedCallback:
                 self._onConnectedCallback(self, self._connectionStatus)
-        return callback
 
     @property
     def onDisconnected(self):
@@ -51,7 +50,6 @@ class SimpleTCPClient:
         if 'Disconnected' in self._connectionStatus:
             if self._onDisconnectedCallback:
                 self._onDisconnectedCallback(self, self._connectionStatus)
-        return callback
 
     @property
     def onReceive(self):
@@ -60,7 +58,6 @@ class SimpleTCPClient:
     @onReceive.setter
     def onReceive(self, callback):
         self._onReceiveCallback = callback
-        return callback
 
     def _NewConnectionStatus(self, newState):
         if newState != self._connectionStatus:
@@ -169,6 +166,7 @@ class SimpleTCPClient:
 
 if __name__ == '__main__':
     import random
+
     # from simple_tcp.tcp_client import SimpleTCPClient
     client = SimpleTCPClient('10.8.27.171', 23)
     print('client.Hostname=', client.Hostname)
