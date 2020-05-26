@@ -23,6 +23,14 @@ class SimpleTCPClient:
         if self._autoConnect:
             self.Connect(1)
 
+    @property
+    def Hostname(self):
+        return self._hostname
+
+    @property
+    def IPPort(self):
+        return self._ipport
+
     def StartLogging(self):
         pass
 
@@ -167,7 +175,7 @@ class SimpleTCPClient:
 if __name__ == '__main__':
     import random
 
-    # from simple_tcp.tcp_client import SimpleTCPClient
+    # from simple_socket.tcp_client import SimpleTCPClient
     client = SimpleTCPClient('10.8.27.171', 23)
     print('client.Hostname=', client.Hostname)
 

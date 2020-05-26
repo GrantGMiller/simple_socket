@@ -1,7 +1,7 @@
-# simple_tcp
+# SimpleTCPClient
 
 import random
-# from simple_tcp.tcp_client import SimpleTCPClient
+from simple_socket.tcp_client import SimpleTCPClient
 client = SimpleTCPClient('10.8.27.171', 23)
 print('client.Hostname=', client.Hostname)
 
@@ -20,3 +20,26 @@ while True:
     if 'Connected' in client.ConnectionStatus:
         client.Send(cmd)
     time.sleep(5)
+
+# SimpleUDPClient
+
+from simple_socket.udp_client import SimpleUDPClient
+
+client1 = SimpleUDPClient('localhost', sendIPPort=1025, receiveIPPort=1024)
+
+
+def Client1HandleReceive(interface, data):
+    client1.Send('From client1 echo: {}'.format(data.decode()))
+
+
+client1.onReceive = Client1HandleReceive
+print('client1=', client1)
+
+client2 = SimpleUDPClient('localhost', sendIPPort=1024, receiveIPPort=1025)
+client2.onReceive = lambda _, data: print('Rx:', data)
+print('client2=', client2)
+while True:
+    client2.Send(f'From client2: The time is {time.asctime()}\r\n')
+    time.sleep(3)
+
+
