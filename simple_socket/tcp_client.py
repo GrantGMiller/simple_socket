@@ -83,7 +83,7 @@ class SimpleTCPClient:
                 self._StopReceiveLoop()
 
         if self._autoConnect and 'Disconnected' in self._connectionStatus:
-            if self._timerAutoConnect and self._timerAutoConnect.isAlive():
+            if self._timerAutoConnect and self._timerAutoConnect.is_alive():
                 self._timerAutoConnect.cancel()
             self._timerAutoConnect = Timer(5, self.Connect)
             self._timerAutoConnect.start()
@@ -93,7 +93,7 @@ class SimpleTCPClient:
             self._timerParseReceive = Timer(0.5, self._ParseReceiveData)
             self._timerParseReceive.start()
 
-        elif self._timerParseReceive.isAlive():
+        elif self._timerParseReceive.is_alive():
             self._timerParseReceive.cancel()
             self._timerParseReceive = None
             self._RestartReceiveLoop()
@@ -102,7 +102,7 @@ class SimpleTCPClient:
             self._RestartReceiveLoop()
 
     def _StopReceiveLoop(self):
-        if self._timerParseReceive and self._timerParseReceive.isAlive():
+        if self._timerParseReceive and self._timerParseReceive.is_alive():
             self._timerParseReceive.cancel()
         self._timerParseReceive = None
 
