@@ -59,7 +59,9 @@ class SimpleTCPServer:
         self._sock.bind((socket.gethostname(), self._listenport))
         self._sock.listen(self._maxClients)
 
-        self.clients = set()
+        self._clients = {
+            # clientSocket: clientObj,
+        }
 
         self._onConnectedCallback = None
         self._onDisconnectedCallback = None
@@ -77,6 +79,10 @@ class SimpleTCPServer:
             print(*a, **k)
 
     @property
+    def Clients(self):
+        return set(self._clients.values())
+
+    @property
     def ListenPort(self):
         return self._listenport
 
@@ -87,7 +93,7 @@ class SimpleTCPServer:
     @onConnected.setter
     def onConnected(self, callback):
         self._onConnectedCallback = callback
-        for client in self.clients:
+        for client in self._clients.values():
             if self._onConnectedCallback:
                 self._onConnectedCallback(client, 'Connected')
 
@@ -109,23 +115,24 @@ class SimpleTCPServer:
 
     def _NewConnectionStatus(self, client, newState):
         if newState == 'Disconnected':
-            self.clients.remove(client)
+            self._clients.pop(client.sock, None)
+            if self.onDisconnected:
+                self.onDisconnected(client, 'Disconnected')
         elif newState == 'Connected':
-            self.clients.add(client)
+            self._clients[client.sock] = client
+            if self.onConnected:
+                self.onConnected(client, 'Connected')
 
     def _GetClient(self, clientSock, address):
-        for c in self.clients:
-            if c.sock == clientSock:
-                return c
-        else:
-            # did not find client, create new client
+        c = self._clients.get(clientSock, None)
+        if c is None:
             c = Client(
                 parent=self,
                 sock=clientSock,
                 ipAddress=address[0],
                 servicePort=address[1],
             )
-            self.clients.add(c)
+            self._clients[clientSock] = c
             self._NewConnectionStatus(c, 'Connected')
             return c
 
@@ -159,7 +166,7 @@ class SimpleTCPServer:
 
         # process any newly received data from clients
         if self._onReceiveCallback:
-            for c in self.clients.copy():
+            for c in self._clients.copy().values():
                 data = c.Recv()
                 if data:
                     self._onReceiveCallback(c, data)
