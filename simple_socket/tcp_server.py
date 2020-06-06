@@ -219,6 +219,9 @@ if __name__ == '__main__':
         client.Send(b'Echo: ' + data + b'\r\n')
 
         if b'q' in data:
+            # the server can force-close a connection
+            # in this case,
+            # the server will disconnect a client if they send the letter 'q'
             client.Disconnect()
 
 
