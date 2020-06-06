@@ -83,6 +83,10 @@ class SimpleTCPServer:
         return set(self._clients.values())
 
     @property
+    def ListenIPAddress(self):
+        return socket.gethostbyname(socket.gethostname())
+
+    @property
     def ListenPort(self):
         return self._listenport
 
