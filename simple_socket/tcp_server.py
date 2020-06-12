@@ -34,10 +34,10 @@ class Client:
             else:
                 return data
         except Exception as e:
-            self.Print('Client.Recv e=', e)
             if 'timed out' in str(e):
                 pass
             else:
+                self.Print('Client.Recv e=', e)
                 self.Disconnect()
                 raise e
 
@@ -161,7 +161,7 @@ class SimpleTCPServer:
     def _ParseReceiveData(self):
 
         try:
-            self.Print('Check for any new clients')
+            #self.Print('Check for any new clients')
             clientsock, address = self._sock.accept()  # accept any clients that are trying to connect
             self.Print('clientsock=', clientsock, ', address=', address)
             self._GetClient(clientsock, address)
@@ -171,9 +171,17 @@ class SimpleTCPServer:
         # process any newly received data from clients
         if self._onReceiveCallback:
             for c in self._clients.copy().values():
-                data = c.Recv()
+                try:
+                    data = c.Recv()  # may fail due to socket closure
+                except Exception as e:
+                    print('Client {} Receive Exception: {}'.format(c, e))
+                    data = b''
+
                 if data:
-                    self._onReceiveCallback(c, data)
+                    try:
+                        self._onReceiveCallback(c, data)  # might fail due to user callback
+                    except Exception as e:
+                        print('Callback Error:', e)
 
         self._RestartReceiveLoop()
 
