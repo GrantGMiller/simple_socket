@@ -1,6 +1,7 @@
 import socket
 import time
 from threading import Timer
+import ssl
 
 
 class Client:
@@ -47,17 +48,12 @@ class Client:
         self.sock.close()
 
 
-class SimpleTCPServer:
+class _BaseTCPServer:
     def __init__(self, listenport, maxClients=None, disconnectDeadClients=True, trace=False):
         self._listenport = listenport
         self._maxClients = maxClients or 10
         self._disconnectDeadClients = disconnectDeadClients
         self.trace = trace
-
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._sock.settimeout(0.1)
-        self._sock.bind((socket.gethostname(), self._listenport))
-        self._sock.listen(self._maxClients)
 
         self._clients = {
             # clientSocket: clientObj,
@@ -71,8 +67,11 @@ class SimpleTCPServer:
         self._timerParseReceive = None
 
         self._timerAutoConnect = None
+        self._running = True
 
-        self._RestartReceiveLoop()
+    def Stop(self):
+        self._running = True
+
 
     def Print(self, *a, **k):
         if self.trace:
@@ -118,6 +117,7 @@ class SimpleTCPServer:
         self._onReceiveCallback = callback
 
     def _NewConnectionStatus(self, client, newState):
+        self.Print('Server _NewConnectionStatus(', client, newState)
         if newState == 'Disconnected':
             self._clients.pop(client.sock, None)
             if self.onDisconnected:
@@ -141,6 +141,10 @@ class SimpleTCPServer:
             return c
 
     def _RestartReceiveLoop(self):
+        if self._running is False:
+            self._sock.close()
+            return
+
         if self._timerParseReceive is None:
             self._timerParseReceive = Timer(0.1, self._ParseReceiveData)
             self._timerParseReceive.start()
@@ -159,11 +163,10 @@ class SimpleTCPServer:
         self._timerParseReceive = None
 
     def _ParseReceiveData(self):
-
         try:
-            #self.Print('Check for any new clients')
+            # self.Print('Check for any new clients')
             clientsock, address = self._sock.accept()  # accept any clients that are trying to connect
-            self.Print('clientsock=', clientsock, ', address=', address)
+            self.Print('Server has new client: clientsock=', clientsock, ', address=', address)
             self._GetClient(clientsock, address)
         except:
             pass
@@ -221,6 +224,51 @@ class SimpleTCPServer:
         self._NewConnectionStatus('Disconnected')
         self._sock = None
         return self._connectionStatus
+
+
+class SimpleTCPServer(_BaseTCPServer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._sock.settimeout(0.1)
+        self._sock.bind((socket.gethostname(), self._listenport))
+        self._sock.listen(self._maxClients)
+
+        self._RestartReceiveLoop()
+
+
+class SimpleSSLServer(_BaseTCPServer):
+    '''
+    Consider generating your own self-signed cert
+
+    Install OpenSSL
+    win64_url = 'https://slproweb.com/download/Win64OpenSSL-1_1_1g.msi'
+    win32_url = 'https://slproweb.com/download/Win32OpenSSL-1_1_1g.msi'
+
+    Generate your own certs
+    openssl req -x509 -newkey rsa:4096 -keyout private.key -out cert.pem -days 365
+
+    '''
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.Print('SimpleSSLServer.__init__(', *args)
+
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._sock.settimeout(0.1)
+        self._sock.bind((socket.gethostname(), self._listenport))
+
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain('cert.pem', 'private.key', password='simple_socket')
+
+        self._sock = context.wrap_socket(
+            self._sock,
+            server_side=True,
+        )  # self._sock now an ssl server
+
+        self._sock.listen(self._maxClients)
+        self._RestartReceiveLoop()
 
 
 if __name__ == '__main__':

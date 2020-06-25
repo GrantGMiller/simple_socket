@@ -2,7 +2,8 @@ from setuptools import setup
 
 setup(
     name='simple_socket',
-    version='0.0.2',
+    version='0.0.3',
+    # 0.0.3 - Added SSL server/client
     # 0.0.2 - Added readme.md
     # 0.0.1 - init release
     packages=['simple_socket'],

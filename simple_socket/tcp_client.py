@@ -1,13 +1,15 @@
 import socket
 import time
 from threading import Timer
+import ssl
 
 
-class SimpleTCPClient:
+class _BaseTCPClient:
     def __init__(self, hostname, ipport, autoConnect=True, trace=False):
         self._hostname = hostname
         self._ipport = ipport
         self._autoConnect = autoConnect
+        self._trace = trace
 
         self._sock = None
 
@@ -20,8 +22,13 @@ class SimpleTCPClient:
 
         self._timerAutoConnect = None
 
+        self._running = True
+
         if self._autoConnect:
             self.Connect(1)
+
+    def Stop(self):
+        self._running = False
 
     @property
     def Hostname(self):
@@ -30,12 +37,6 @@ class SimpleTCPClient:
     @property
     def IPPort(self):
         return self._ipport
-
-    def StartLogging(self):
-        pass
-
-    def StopLogging(self):
-        pass
 
     @property
     def onConnected(self):
@@ -89,6 +90,10 @@ class SimpleTCPClient:
             self._timerAutoConnect.start()
 
     def _RestartReceiveLoop(self):
+        if self._running is False:
+            self._sock.close()
+            return
+
         if self._timerParseReceive is None:
             self._timerParseReceive = Timer(0.5, self._ParseReceiveData)
             self._timerParseReceive.start()
@@ -106,15 +111,22 @@ class SimpleTCPClient:
             self._timerParseReceive.cancel()
         self._timerParseReceive = None
 
+    def Print(self, *a, **k):
+        if self._trace:
+            print(*a, **k)
+
     def _ParseReceiveData(self):
-        # print('ParseReceiveData')
         try:
             rxData = self._sock.recv(1024)
             if rxData == b'':
                 self.Disconnect()
+            else:
+                self.Print('Client Rx:', rxData)
+
             if self._onReceiveCallback:
                 # do callback in its own thread to prevent blocking
                 Timer(0, self._onReceiveCallback, args=(self, rxData)).start()
+
         except Exception as e:
             if 'timed out' in str(e):
                 pass
@@ -123,22 +135,7 @@ class SimpleTCPClient:
             self._RestartReceiveLoop()
 
     def Connect(self, timeout=None):
-        print('Connect(timeout=', timeout)
-        try:
-            if self._sock is None:
-                self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._sock.settimeout(timeout or 10)
-            self._sock.connect((self._hostname, self._ipport))
-            self._NewConnectionStatus('Connected')
-        except Exception as e:
-            print('Connection Error:', e)
-            if 'A connect request was made on an already connected socket' in str(e):
-                self._NewConnectionStatus('Connected')
-                return 'Connected'
-
-            self._NewConnectionStatus('Disconnected:' + str(e))
-
-        return self._connectionStatus
+        raise NotImplementedError
 
     @property
     def ConnectionStatus(self):
@@ -170,6 +167,56 @@ class SimpleTCPClient:
                 self.Disconnect()
             except:
                 pass
+
+
+class SimpleTCPClient(_BaseTCPClient):
+    def Connect(self, timeout=None):
+        self.Print('Client Connect(timeout=', timeout)
+        try:
+            if self._sock is None:
+                self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._sock.settimeout(timeout or 10)
+            self._sock.connect((self._hostname, self._ipport))
+            self._NewConnectionStatus('Connected')
+        except Exception as e:
+            print('Client Connection Error:', e)
+            if 'A connect request was made on an already connected socket' in str(e):
+                self._NewConnectionStatus('Connected')
+                return 'Connected'
+
+            self._NewConnectionStatus('Disconnected:' + str(e))
+
+        return self._connectionStatus
+
+
+class SimpleSSLClient(_BaseTCPClient):
+    def Connect(self, timeout=None):
+        self.Print('\nssl.OPENSSL_VERSION=', ssl.OPENSSL_VERSION)
+        self.Print('Client Connect(timeout=', timeout)
+        try:
+            if self._sock is None:
+                self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+                context = ssl.create_default_context()
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+                self._sock = context.wrap_socket(
+                    self._sock,
+                    server_hostname=self.Hostname,
+                )  # self._sock is now an SSL client
+
+            self._sock.settimeout(timeout or 10)
+            self._sock.connect((self._hostname, self._ipport))
+            self._NewConnectionStatus('Connected')
+        except Exception as e:
+            print('Connection Error:', e)
+            if 'A connect request was made on an already connected socket' in str(e):
+                self._NewConnectionStatus('Connected')
+                return 'Connected'
+
+            self._NewConnectionStatus('Disconnected:' + str(e))
+
+        return self._connectionStatus
 
 
 if __name__ == '__main__':

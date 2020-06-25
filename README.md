@@ -2,7 +2,8 @@
 ```python
 import random
 import time
-from simple_socket.tcp_client import SimpleTCPClient
+from simple_socket.tcp_client import SimpleTCPClient # try also SimpleSSLClient for semi-secure communication (it does not verify the cert)
+
 client = SimpleTCPClient('192.168.254.254', 1885)
 print('client.Hostname=', client.Hostname)
 
@@ -25,6 +26,7 @@ while True:
 # SimpleUDPClient
 ```python
 from simple_socket.udp_client import SimpleUDPClient
+import time
 
 client1 = SimpleUDPClient('localhost', sendIPPort=1025, receiveIPPort=1024)
 
@@ -45,7 +47,7 @@ while True:
 ```
 # SimpleTCPServer
 ```python
-from simple_socket.tcp_server import SimpleTCPServer 
+from simple_socket.tcp_server import SimpleTCPServer # try also SimpleSSLServer for semi-secure communication (it uses a self-signed cert)
 server = SimpleTCPServer(3888)
 
 server.onConnected = lambda client, state: print('Client {} is {}'.format(client, state))
