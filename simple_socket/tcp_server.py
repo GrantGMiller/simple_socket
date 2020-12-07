@@ -18,7 +18,7 @@ class Client:
             print(*a, **k)
 
     def Send(self, data):
-        self.Print('Client.Send(', self, data)
+        self.Print('tcp_server.Client.Send(', self, data)
         if not isinstance(data, bytes):
             data = data.encode(encoding='iso-8859-1')
 
@@ -27,7 +27,7 @@ class Client:
     def Recv(self):
         try:
             data = self.sock.recv(1024)
-            self.Print('Client.Recv(', self, ', data=', data)
+            self.Print('tcp_server.Client.Recv(', self, ', data=', data)
             if data == b'':
                 # client has disconnected
                 self.Disconnect()
@@ -47,9 +47,13 @@ class Client:
         self._parent._NewConnectionStatus(self, 'Disconnected')
         self.sock.close()
 
+    def __str__(self):
+        return '<tcp_server.Client object: Hostname: {}, Service Port: {}>'.format(self.ipAddress, self.servicePort)
+
 
 class _BaseTCPServer:
-    def __init__(self, listenport, maxClients=None, disconnectDeadClients=True, trace=False):
+    def __init__(self, listenport, listenAddress=None, maxClients=None, disconnectDeadClients=True, trace=False):
+        self._listenAddress = listenAddress  # None will use the first available NIC, or pass the IP Address of the NIC you wish to use
         self._listenport = listenport
         self._maxClients = maxClients or 10
         self._disconnectDeadClients = disconnectDeadClients
@@ -71,7 +75,6 @@ class _BaseTCPServer:
 
     def Stop(self):
         self._running = True
-
 
     def Print(self, *a, **k):
         if self.trace:
@@ -122,6 +125,7 @@ class _BaseTCPServer:
             self._clients.pop(client.sock, None)
             if self.onDisconnected:
                 self.onDisconnected(client, 'Disconnected')
+
         elif newState == 'Connected':
             self._clients[client.sock] = client
             if self.onConnected:
@@ -229,11 +233,13 @@ class _BaseTCPServer:
 class SimpleTCPServer(_BaseTCPServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._sock.settimeout(0.1)
-        self._sock.bind((socket.gethostname(), self._listenport))
-        self._sock.listen(self._maxClients)
+        if self._listenAddress:
+            self._sock = socket.create_server((self._listenAddress, self._listenport))
+        else:
+            self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._sock.settimeout(0.1)
+            self._sock.bind((socket.gethostname(), self._listenport))
+            self._sock.listen(self._maxClients)
 
         self._RestartReceiveLoop()
 
@@ -255,9 +261,12 @@ class SimpleSSLServer(_BaseTCPServer):
         super().__init__(*args, **kwargs)
         self.Print('SimpleSSLServer.__init__(', *args)
 
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self._sock.settimeout(0.1)
-        self._sock.bind((socket.gethostname(), self._listenport))
+        if self._listenAddress:
+            self._sock = socket.create_server((self._listenAddress, self._listenport))
+        else:
+            self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._sock.settimeout(0.1)
+            self._sock.bind((socket.gethostname(), self._listenport))
 
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.load_cert_chain('cert.pem', 'private.key', password='simple_socket')

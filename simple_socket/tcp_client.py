@@ -168,6 +168,9 @@ class _BaseTCPClient:
             except:
                 pass
 
+    def __del__(self):
+        self.Stop()
+
 
 class SimpleTCPClient(_BaseTCPClient):
     def Connect(self, timeout=None):
