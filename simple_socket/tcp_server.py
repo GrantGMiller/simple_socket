@@ -237,9 +237,10 @@ class SimpleTCPServer(_BaseTCPServer):
             self._sock = socket.create_server((self._listenAddress, self._listenport))
         else:
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._sock.settimeout(0.1)
             self._sock.bind((socket.gethostname(), self._listenport))
             self._sock.listen(self._maxClients)
+
+        self._sock.settimeout(0.1)
 
         self._RestartReceiveLoop()
 
@@ -265,8 +266,9 @@ class SimpleSSLServer(_BaseTCPServer):
             self._sock = socket.create_server((self._listenAddress, self._listenport))
         else:
             self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self._sock.settimeout(0.1)
             self._sock.bind((socket.gethostname(), self._listenport))
+
+        self._sock.settimeout(0.1)
 
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.load_cert_chain('cert.pem', 'private.key', password='simple_socket')

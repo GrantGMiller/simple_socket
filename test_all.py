@@ -133,3 +133,27 @@ def test_SSLServerClient():
 
     server.Stop()
     client.Stop()
+
+
+def test_SMD():
+    client = SimpleTCPClient('192.168.68.143', 23)
+    client.onConnected = lambda _, state: print('SMD:', state)
+    client.onDisconnected = lambda _, state: print('SMD:', state)
+
+    def HandleRX(intf, data):
+        print('HandleRX(', data)
+        if 'Password:' in data.decode():
+            print('sending password *****')
+            intf.Send('extron\r')
+
+    client.onReceive = HandleRX
+
+    while 'Disconnected' in client.ConnectionStatus:
+        print('waiting for connection')
+        time.sleep(1)
+
+    for i in range(3):
+        time.sleep(1)
+        msg = 'q'
+        print('Send(', msg)
+        client.Send(msg)
