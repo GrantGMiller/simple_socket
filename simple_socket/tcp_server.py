@@ -86,7 +86,7 @@ class _BaseTCPServer:
 
     @property
     def ListenIPAddress(self):
-        return self._listenAddress
+        return self._listenAddress or socket.gethostbyname(socket.gethostname())
 
     @property
     def ListenPort(self):
