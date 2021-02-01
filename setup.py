@@ -6,7 +6,8 @@ with open(path.join(this_directory, 'README.rst'), encoding='utf-8') as f:
     long_description = f.read()
 setup(
     name='simple_socket',
-    version='0.0.7',
+    version='0.0.8',
+    # 0.0.8 - Bug fix .ListenIPAddress was returning wrong value
     # 0.0.7 - Bug fix in _BaseTCPServer, timeout was set incorrectly causing long pauses
     # 0.0.6 - Added 'listenAddress' parameter
     # 0.0.5 - Added README.rst

@@ -52,12 +52,13 @@ class Client:
 
 
 class _BaseTCPServer:
-    def __init__(self, listenport, listenAddress=None, maxClients=None, disconnectDeadClients=True, trace=False):
+    def __init__(self, listenport, listenAddress=None, maxClients=None, disconnectDeadClients=True, trace=False, clientClass=None):
         self._listenAddress = listenAddress  # None will use the first available NIC, or pass the IP Address of the NIC you wish to use
         self._listenport = listenport
         self._maxClients = maxClients or 10
         self._disconnectDeadClients = disconnectDeadClients
         self.trace = trace
+        self.clientClass = clientClass or Client
 
         self._clients = {
             # clientSocket: clientObj,
@@ -134,7 +135,7 @@ class _BaseTCPServer:
     def _GetClient(self, clientSock, address):
         c = self._clients.get(clientSock, None)
         if c is None:
-            c = Client(
+            c = self.clientClass(
                 parent=self,
                 sock=clientSock,
                 ipAddress=address[0],
