@@ -22,7 +22,10 @@ class Client:
         if not isinstance(data, bytes):
             data = data.encode(encoding='iso-8859-1')
 
-        self.sock.send(data)
+        try:
+            self.sock.send(data)
+        except Exception as e:
+            print('tcp_server.Client.Send() Error:', e)
 
     def Recv(self):
         try:
@@ -52,7 +55,8 @@ class Client:
 
 
 class _BaseTCPServer:
-    def __init__(self, listenport, listenAddress=None, maxClients=None, disconnectDeadClients=True, trace=False, clientClass=None):
+    def __init__(self, listenport, listenAddress=None, maxClients=None, disconnectDeadClients=True, trace=False,
+                 clientClass=None):
         self._listenAddress = listenAddress  # None will use the first available NIC, or pass the IP Address of the NIC you wish to use
         self._listenport = listenport
         self._maxClients = maxClients or 10
