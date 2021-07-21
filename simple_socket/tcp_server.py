@@ -193,7 +193,7 @@ class _BaseTCPServer:
                     try:
                         self._onReceiveCallback(c, data)  # might fail due to user callback
                     except Exception as e:
-                        print('Callback Error:', e)
+                        print(f'{self} Callback Error:', e)
 
         self._RestartReceiveLoop()
 

@@ -171,6 +171,9 @@ class _BaseTCPClient:
     def __del__(self):
         self.Stop()
 
+    def __str__(self):
+        return f'<{type(self)}: Hostname={self.Hostname}, IPPort={self.IPPort}, ConnectionStatus={self.ConnectionStatus}, id={id(self)}>'
+
 
 class SimpleTCPClient(_BaseTCPClient):
     def Connect(self, timeout=None):
