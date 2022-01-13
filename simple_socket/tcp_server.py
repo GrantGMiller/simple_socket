@@ -195,6 +195,7 @@ class _BaseTCPServer:
                     except Exception as e:
                         print(f'{self} Callback Error:', e)
 
+
         self._RestartReceiveLoop()
 
     def Connect(self, timeout=None):
